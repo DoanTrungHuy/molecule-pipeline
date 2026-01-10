@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+pydantic
+numpy<2
+rdkit-pypi
