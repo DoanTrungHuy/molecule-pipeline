@@ -10,7 +10,6 @@ class Filters(BaseModel):
     max_violations: int
 
 class RunRequest(BaseModel):
-    objective: str
     seeds: List[str]
     filters: Filters
     num_candidates: int

@@ -10,12 +10,11 @@ class PipelineRunner:
         planner = Planner()
 
         plan = planner.plan(
-            config["objective"],
-            config["filters"],
-            config["seeds"],
-            config["num_candidates"],
-            config.get("rounds"),
-            config.get("top_k")
+            filters=config["filters"],
+            seeds=config["seeds"],
+            num_candidates=config["num_candidates"],
+            rounds=config.get("rounds"),
+            top_k=config.get("top_k")
         )
 
         generator = Generator()
@@ -33,23 +32,18 @@ class PipelineRunner:
             candidates = generator.generate(seeds, plan["num_candidates"])
 
             evaluated = []
-            invalid = 0
             for smi in candidates:
                 props = evaluator.evaluate(smi)
                 if not props:
-                    invalid += 1
                     continue
                 evaluated.append((smi, props))
 
             passed = []
-            failed = 0
             for smi, props in evaluated:
                 ok, violations = screener.screen(props, plan["filters"])
                 if ok:
                     score = ranker.score(props, violations)
                     passed.append({"smiles": smi, "score": score, "violations": violations, "properties": props})
-                else:
-                    failed += 1
 
             passed.sort(key=lambda x: x["score"], reverse=True)
             sel = passed[:top_k]
@@ -57,6 +51,8 @@ class PipelineRunner:
             seeds = [x["smiles"] for x in sel]
 
             final_results = sel
+
+            # print(final_results)
 
             if not seeds:
                 break

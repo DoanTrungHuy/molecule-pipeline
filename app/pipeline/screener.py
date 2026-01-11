@@ -1,7 +1,5 @@
 class Screener:
     def screen(self, props, filters):
-        filters = self._ensure_dict(filters)
-
         max_viol = filters["max_violations"]
         violations = 0
 
@@ -13,8 +11,10 @@ class Screener:
                 continue
 
             val = props[key]
-            
-            if val <= thr:
+
+            if val > thr:
                 violations += 1
+
+            # print(f"Screening {key}: value={val}, threshold={thr}, violations={violations}")
 
         return violations <= max_viol, violations

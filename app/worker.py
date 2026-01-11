@@ -19,7 +19,7 @@ def worker_loop():
 
 def start_worker(num_workers: int | None = None):
     if num_workers is None:
-        num_workers = int(os.getenv("WORKER_THREADS", "4"))
+        num_workers = int(os.getenv("WORKER_THREADS", "10"))
 
     threads = []
     for i in range(num_workers):
