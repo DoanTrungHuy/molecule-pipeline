@@ -38,16 +38,17 @@ def get_results(run_id: str):
     run = run_store.get(run_id)
     if not run:
         raise HTTPException(404)
+    
+    # print(run)
 
     status = run["status"]
     if status == "finished":
         return {"results": run["results"]}
 
     if status == "failed":
-        results = run.get("results") or {}
         return {
-            "status": "failed",
-            "error": results.get("error")
+            "status": status,
+            "error": run["error"]
         }
 
     return {"status": status}

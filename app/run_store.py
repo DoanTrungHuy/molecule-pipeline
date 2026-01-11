@@ -26,8 +26,7 @@ class RunStore:
     def fail(self, run_id, error):
         with self._lock:
             self._runs[run_id]["status"] = "failed"
-            entry = {"error": str(error)}
-            self._runs[run_id]["results"] = entry
+            self._runs[run_id]["error"] = error
 
     def get(self, run_id):
         with self._lock:

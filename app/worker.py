@@ -7,14 +7,18 @@ from app.pipeline.runner import PipelineRunner
 
 def worker_loop():
     while True:
-        run_id = task_queue.get()
-        run_store.update_status(run_id, "running")
+        try:
+            run_id = task_queue.get()
+            run_store.update_status(run_id, "running")
 
-        config = run_store.get(run_id)["config"]
+            config = run_store.get(run_id)["config"]
 
-        results = PipelineRunner().run(config, run_id)
+            results = PipelineRunner().run(config, run_id)
 
-        run_store.finish(run_id, results)
+            run_store.finish(run_id, results)
+            
+        except Exception as e:
+            print(f"Worker encountered an error: {e}")
 
 
 def start_worker(num_workers: int | None = None):

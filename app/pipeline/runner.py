@@ -7,54 +7,58 @@ from app.run_store import run_store
 
 class PipelineRunner:
     def run(self, config, run_id=None):
-        planner = Planner()
+        try:
+            planner = Planner()
 
-        plan = planner.plan(
-            filters=config["filters"],
-            seeds=config["seeds"],
-            num_candidates=config["num_candidates"],
-            rounds=config.get("rounds"),
-            top_k=config.get("top_k")
-        )
+            plan = planner.plan(
+                filters=config["filters"],
+                seeds=config["seeds"],
+                num_candidates=config["num_candidates"],
+                rounds=config.get("rounds"),
+                top_k=config.get("top_k")
+            )
 
-        generator = Generator()
-        evaluator = Evaluator()
-        screener = Screener()
-        ranker = Ranker()
+            generator = Generator()
+            evaluator = Evaluator()
+            screener = Screener()
+            ranker = Ranker()
 
-        seeds = plan["seeds"]
-        final_results = []
+            seeds = plan["seeds"]
+            dummy_seeds = seeds.copy()
+            final_results = []
 
-        rounds = plan["rounds"]
-        top_k = plan["top_k"]
+            rounds = plan["rounds"]
+            top_k = plan["top_k"]
 
-        for r in range(rounds):
-            candidates = generator.generate(seeds, plan["num_candidates"])
+            for r in range(rounds):
+                candidates = generator.generate(dummy_seeds, plan["num_candidates"])
 
-            evaluated = []
-            for smi in candidates:
-                props = evaluator.evaluate(smi)
-                if not props:
-                    continue
-                evaluated.append((smi, props))
+                evaluated = []
+                for smi in candidates:
+                    props = evaluator.evaluate(smi)
+                    if not props:
+                        continue
+                    evaluated.append((smi, props))
 
-            passed = []
-            for smi, props in evaluated:
-                ok, violations = screener.screen(props, plan["filters"])
-                if ok:
-                    score = ranker.score(props, violations)
-                    passed.append({"smiles": smi, "score": score, "violations": violations, "properties": props})
+                passed = []
+                for smi, props in evaluated:
+                    ok, violations = screener.screen(props, plan["filters"])
+                    if ok:
+                        score = ranker.score(props, violations)
+                        passed.append({"smiles": smi, "score": score, "violations": violations, "properties": props})
 
-            passed.sort(key=lambda x: x["score"], reverse=True)
-            sel = passed[:top_k]
+                # print(dummy_seeds)
+                if len(passed) == 0:
+                    break
 
-            seeds = [x["smiles"] for x in sel]
+                passed.sort(key=lambda x: x["score"], reverse=True)
+                top_smiles = passed[:top_k]
+                dummy_seeds = [entry["smiles"] for entry in top_smiles]
+                final_results = top_smiles
 
-            final_results = sel
-
-            # print(final_results)
-
-            if not seeds:
-                break
-
-        return final_results
+            return final_results
+                
+        except Exception as e:
+            if run_id:
+                run_store.fail(run_id, str(e))
+            raise e
